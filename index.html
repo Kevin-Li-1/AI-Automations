@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>HVAC Automation Demos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>/* Layout: a split "customer view | system view" walkthrough, then build spec, sample report and guardrails in one narrow column. */
+:root{
+  --bg:#eef2f4; --surface:#ffffff; --sunk:#e3e9ed; --ink:#13212b; --muted:#566874; --line:#d3dce2;
+  --cool:#0b6e86; --cool-soft:#d9eef3; --heat:#b8461b; --heat-soft:#fbe6dc;
+  --ai:#5145c9; --ai-soft:#e6e3fb; --stop:#7a5c63; --stop-soft:#efe5e7;
+  --bubble-in:#e3e9ed; --bubble-out:#0b6e86; --bubble-out-ink:#ffffff;
+  --f-display:"Archivo","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f171d; --surface:#16222a; --sunk:#1d2b34; --ink:#e4ecf0; --muted:#97a9b4; --line:#2a3a45;
+  --cool:#4fb8cf; --cool-soft:#123540; --heat:#f08a5d; --heat-soft:#3d2219;
+  --ai:#a49cf5; --ai-soft:#262250; --stop:#c9a3ac; --stop-soft:#33252a;
+  --bubble-in:#22323c; --bubble-out:#1f7f96; --bubble-out-ink:#ffffff; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f171d; --surface:#16222a; --sunk:#1d2b34; --ink:#e4ecf0; --muted:#97a9b4; --line:#2a3a45;
+  --cool:#4fb8cf; --cool-soft:#123540; --heat:#f08a5d; --heat-soft:#3d2219;
+  --ai:#a49cf5; --ai-soft:#262250; --stop:#c9a3ac; --stop-soft:#33252a;
+  --bubble-in:#22323c; --bubble-out:#1f7f96; --bubble-out-ink:#ffffff; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:20px 56px;display:flex;flex-direction:column;gap:36px}
+a{color:var(--cool)}
+:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,4.4vw,42px);font-weight:700;font-stretch:92%;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:700;font-stretch:95%}
+h3{font-size:15px;font-weight:600}
+p{margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+
+.topbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;font-size:13px}
+.topbar a{text-decoration:none;font-weight:600}
+.sample{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
+  background:var(--heat-soft);color:var(--heat);border:1px solid color-mix(in srgb,var(--heat) 35%,transparent);padding:4px 9px;border-radius:4px}
+
+.hero{display:flex;flex-direction:column;gap:12px;max-width:760px}
+.hero .pitch{font-size:18px;color:var(--ink)}
+.hero .problem{color:var(--muted);max-width:65ch}
+.client{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.client b{color:var(--ink);font-weight:600}
+
+/* Walkthrough */
+.stage{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:820px){.stage{grid-template-columns:minmax(0,1fr)}}
+.panehead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.phone{background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:10px;box-shadow:0 1px 0 var(--line),0 12px 30px -18px rgba(10,30,40,.35)}
+.phone-top{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px 10px;border-bottom:1px solid var(--line)}
+.phone-top .who{font-weight:600;font-size:14px}
+.phone-top .chan{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.convo{height:440px;overflow-y:auto;padding:14px 8px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+.msg{max-width:84%;padding:8px 12px;border-radius:16px;font-size:14px;line-height:1.45;white-space:pre-line;overflow-wrap:anywhere}
+.msg.in{align-self:flex-start;background:var(--bubble-in);border-bottom-left-radius:5px}
+.msg.out{align-self:flex-end;background:var(--bubble-out);color:var(--bubble-out-ink);border-bottom-right-radius:5px}
+.msg.staff{align-self:flex-end;background:var(--heat-soft);color:var(--ink);border:1px solid color-mix(in srgb,var(--heat) 40%,transparent);border-bottom-right-radius:5px}
+.msg .by{display:block;font-family:var(--f-mono);font-size:10.5px;opacity:.75;margin-bottom:2px;letter-spacing:.02em}
+.msg.email{max-width:96%;border-radius:10px;background:var(--surface);border:1px solid var(--line);align-self:stretch}
+.msg.email.out{background:var(--cool-soft);color:var(--ink);border-color:color-mix(in srgb,var(--cool) 30%,transparent)}
+.msg.email .subj{display:block;font-weight:600;margin-bottom:4px}
+.note{align-self:center;font-family:var(--f-mono);font-size:11px;color:var(--muted);text-align:center;padding:2px 8px}
+.fresh{animation:pop .35s ease-out}
+@keyframes pop{from{transform:translateY(6px);opacity:.2}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.fresh{animation:none}.convo{scroll-behavior:auto}}
+
+.system{background:var(--surface);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;min-width:0}
+.system .head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.steptitle{font-family:var(--f-display);font-size:19px;font-weight:700;font-stretch:95%}
+.log{list-style:none;margin:0;padding:8px 16px 12px;max-height:420px;overflow-y:auto;display:flex;flex-direction:column}
+.log li{display:grid;grid-template-columns:118px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px;opacity:.55}
+.log li.now{opacity:1}
+.log li:last-child{border-bottom:0}
+.log .t{overflow-wrap:anywhere}
+.log .t code{font-family:var(--f-mono);font-size:12.5px;background:var(--sunk);padding:1px 5px;border-radius:3px}
+.tag{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:4px;height:fit-content;width:fit-content;font-weight:600}
+.k-trigger{background:var(--sunk);color:var(--ink)}
+.k-rule{background:var(--cool-soft);color:var(--cool)}
+.k-data{background:var(--cool-soft);color:var(--cool)}
+.k-ai{background:var(--ai-soft);color:var(--ai)}
+.k-human,.k-alert{background:var(--heat-soft);color:var(--heat)}
+.k-stop{background:var(--stop-soft);color:var(--stop)}
+.k-log{background:var(--sunk);color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;border-top:1px solid var(--line)}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 16px;border-top:1px solid var(--line);background:var(--sunk);border-radius:0 0 10px 10px}
+.controls .ask{flex-basis:100%;font-size:13px;font-weight:600}
+button{font:inherit;font-size:14px;cursor:pointer;border-radius:6px;padding:8px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+button:hover{border-color:var(--cool)}
+button.primary{background:var(--cool);border-color:var(--cool);color:var(--surface);font-weight:600}
+button.choice{text-align:left;border-color:color-mix(in srgb,var(--cool) 45%,var(--line))}
+button[disabled]{opacity:.4;cursor:default}
+.spacer{flex:1}
+.counter{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.outcome{flex-basis:100%;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--cool);padding:10px 12px;border-radius:4px;font-size:14px}
+
+/* Spec */
+.section{display:flex;flex-direction:column;gap:14px}
+.section > p{max-width:70ch}
+.spec{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.spec div{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.spec .n{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.spec p{font-size:14px}
+
+/* Report */
+.report{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.report .rh{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar{display:grid;grid-template-columns:minmax(120px,210px) minmax(0,1fr) 48px;gap:12px;align-items:center;font-size:14px}
+.bar .track{height:14px;background:var(--sunk);border-radius:0 4px 4px 0;position:relative}
+.bar .fill{height:100%;background:var(--cool);border-radius:0 4px 4px 0;min-width:2px}
+.bar .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+@media (max-width:520px){.bar{grid-template-columns:minmax(0,1fr) 44px}.bar .track{grid-column:1 / -1;order:3}}
+.disclaim{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+
+.guard{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px 24px}
+.guard li{padding-left:20px;position:relative;font-size:14px;max-width:60ch}
+.guard li::before{content:"";position:absolute;left:0;top:.55em;width:9px;height:9px;border:2px solid var(--heat);border-radius:2px}
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:6px}
+
+.lead{font-size:18px;max-width:62ch}
+.feature{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 24px;align-items:center}
+.feature h2{font-size:26px}
+.feature p{max-width:62ch}
+@media (max-width:640px){.feature{grid-template-columns:minmax(0,1fr)}}
+.btn{display:inline-block;background:var(--cool);color:var(--surface);text-decoration:none;font-weight:600;padding:10px 18px;border-radius:6px;white-space:nowrap}
+.offers{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.offer{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:8px 18px;padding:18px 0;border-bottom:1px solid var(--line);align-items:start}
+.offer .num{font-family:var(--f-display);font-size:24px;font-weight:700;color:var(--muted);line-height:1.1;font-variant-numeric:tabular-nums}
+.offer .body{display:flex;flex-direction:column;gap:4px;min-width:0}
+.offer h3{font-size:18px}
+.offer .leak{font-size:14px;color:var(--muted);max-width:70ch}
+.open{align-self:center;font-weight:600;text-decoration:none;border:1px solid var(--cool);padding:7px 14px;border-radius:6px;white-space:nowrap}
+.open.off{border-color:var(--line);color:var(--muted)}
+@media (max-width:640px){.offer{grid-template-columns:36px minmax(0,1fr)}.open{grid-column:2;justify-self:start}}
+.ladder{display:flex;flex-wrap:wrap;gap:8px;align-items:center;list-style:none;margin:0;padding:0}
+.ladder li{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:6px 10px;font-size:13.5px}
+.ladder li:first-child{border-color:var(--cool);color:var(--cool);font-weight:600}
+.ladder li+li::before{content:"\2192";margin-right:8px;color:var(--muted)}
+.principles{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+.principles div{display:flex;flex-direction:column;gap:6px}
+.principles p{font-size:14px;color:var(--muted)}</style>
+<div class="wrap">
+  <div class="topbar"><span class="eyebrow">Portfolio · automation for local service businesses</span><span class="sample">Fictional business · sample data</span></div>
+  <header class="hero">
+    <h1>Automations that stop local businesses losing customers</h1>
+    <p class="lead">Each demo walks through one system step by step: what your customer sees, what happens behind the scenes, when a person takes over, and what lands in your weekly report.</p>
+    <p class="muted">The demos use three fictional businesses, a heating company, a dental clinic and an auto repair shop, to show how each system adapts. The same systems fit plumbers, clinics, salons, contractors and other appointment-based businesses.</p>
+  </header>
+
+  <section class="feature">
+    <div class="body">
+      <span class="eyebrow">Where most clients start</span>
+      <h2>Missed Call Text-Back</h2>
+      <p>Every missed call gets a text back within about a minute, so the customer doesn't call the next business on Google. How many calls did your business miss last Saturday?</p>
+    </div>
+    <a class="btn" href="01-missed-call-text-back.html">Try the demo</a>
+  </section>
+
+  <section class="section">
+    <h2>Ready-to-run systems</h2>
+    <p class="muted">Standard builds, set up on the tools you already use.</p>
+    <ul class="offers"><li class="offer">
+    <span class="num">01</span>
+    <div class="body"><span class="eyebrow">Example: Heating &amp; cooling</span><h3>Missed Call Text-Back</h3><p>Every missed call gets a text back within about a minute, so the customer doesn't call the next business on Google.</p><p class="leak">Calls get missed when staff are with customers, the front desk is on another line, or it's a Saturday. Most callers don't leave a voicemail; they call the next business. Example: a heating company in November.</p></div>
+    <a class="open" href="01-missed-call-text-back.html">Open demo</a>
+  </li><li class="offer">
+    <span class="num">02</span>
+    <div class="body"><span class="eyebrow">Example: Auto repair</span><h3>Review Request Automation</h3><p>Every finished job gets a polite, well-timed review request, so happy customers actually leave one.</p><p class="leak">Most owners mean to ask for reviews but forget once the customer leaves. Asking at the right moment, every time, is the whole trick. Example: an auto repair shop.</p></div>
+    <a class="open" href="02-review-requests.html">Open demo</a>
+  </li><li class="offer">
+    <span class="num">03</span>
+    <div class="body"><span class="eyebrow">Example: Dental clinic</span><h3>Appointment Reminder System</h3><p>Confirmations, day-before reminders and one-tap rescheduling, so fewer chairs, bays and time slots sit empty.</p><p class="leak">An empty appointment slot is lost revenue that can't be recovered. Most no-shows aren't rude; people forget, or something came up and rescheduling meant a phone call. Example: a dental clinic.</p></div>
+    <a class="open" href="03-appointment-reminders.html">Open demo</a>
+  </li><li class="offer">
+    <span class="num">04</span>
+    <div class="body"><span class="eyebrow">Example: Auto repair</span><h3>Estimate Follow-Up</h3><p>Every open quote gets a polite Day 2, Day 5 and Day 10 follow-up, and every reply reaches the right person.</p><p class="leak">Quotes and estimates are often the biggest tickets a local business writes, and most never get a second touch. Customers go quiet, the owner gets busy, and the work goes elsewhere. Example: an auto repair shop.</p></div>
+    <a class="open" href="04-estimate-follow-up.html">Open demo</a>
+  </li><li class="offer">
+    <span class="num">05</span>
+    <div class="body"><span class="eyebrow">Example: Dental clinic</span><h3>Customer Re-Engagement</h3><p>Past customers who are due for a visit hear from you, using only facts from your own records.</p><p class="leak">Every local business has a list of people who were happy once and then drifted away. Each one is a likely booking, and they already trust you. Example: a dental clinic's overdue check-up list.</p></div>
+    <a class="open" href="05-customer-re-engagement.html">Open demo</a>
+  </li><li class="offer">
+    <span class="num">06</span>
+    <div class="body"><span class="eyebrow">Example: Heating &amp; cooling</span><h3>Lead Follow-Up System</h3><p>Respond to new web leads in under a minute, even at 9 pm, and hand your team a qualified customer.</p><p class="leak">Website forms and online lead services fill up after hours. By morning, the customer has already booked whoever answered first. Example: a heating company's &quot;request service&quot; form.</p></div>
+    <a class="open" href="06-lead-follow-up.html">Open demo</a>
+  </li><li class="offer">
+    <span class="num">10</span>
+    <div class="body"><span class="eyebrow">Example: Dental clinic</span><h3>AI Customer Support &amp; FAQ</h3><p>A website and text assistant that answers the questions your front desk hears every day, from your approved information only.</p><p class="leak">Staff answer &quot;what are your hours?&quot; and &quot;do you take my insurance?&quot; dozens of times a week, and nobody answers at all at 10 pm. Example: a dental clinic.</p></div>
+    <a class="open" href="10-ai-customer-support.html">Open demo</a>
+  </li></ul>
+  </section>
+
+  <section class="section">
+    <h2>Larger builds</h2>
+    <p class="muted">More moving parts, so these usually come after a first system is running well.</p>
+    <ul class="offers"><li class="offer">
+    <span class="num">07</span>
+    <div class="body"><span class="eyebrow">Example: Auto repair</span><h3>Cold Outreach Automation</h3><p>A small, careful outreach program that finds the right business customers and books meetings, without becoming a spam machine.</p><p class="leak">Business accounts smooth out a local company's slow seasons, but owners rarely have time to research prospects and follow up consistently. Example: an auto shop looking for local fleet accounts.</p></div>
+    <a class="open" href="07-cold-outreach.html">Open demo</a>
+  </li><li class="offer">
+    <span class="num">08</span>
+    <div class="body"><span class="eyebrow">Example: Heating &amp; cooling</span><h3>AI Voice Receptionist</h3><p>Every call gets answered, day or night. Routine calls get booked, and anything urgent or sensitive reaches a person.</p><p class="leak">After-hours and busy-season calls go to voicemail. Callers with real emergencies need a person fast; everyone else just needs to get booked. Example: a heating company on a Sunday night.</p></div>
+    <a class="open" href="08-ai-voice-receptionist.html">Open demo</a>
+  </li><li class="offer">
+    <span class="num">09</span>
+    <div class="body"><span class="eyebrow">Example: Heating &amp; cooling</span><h3>Client Onboarding System</h3><p>From signed quote to first appointment: forms, documents, reminders and scheduling handled automatically, with a readiness checklist your team can trust.</p><p class="leak">New jobs and new clients stall on small things: a missing form, a photo nobody asked for, an approval nobody chased. Each one costs a reschedule. Example: a heating company preparing an install.</p></div>
+    <a class="open" href="09-client-onboarding.html">Open demo</a>
+  </li></ul>
+  </section>
+
+  <section class="section">
+    <h2>How clients usually grow</h2>
+    <p class="muted">Start with one leak, prove it pays, then add the next system that uses the same customer data. Not a fixed path.</p>
+    <ol class="ladder"><li>Missed Call Text-Back</li><li>Lead Follow-Up</li><li>Estimate Follow-Up</li><li>Appointment Reminders</li><li>Review Requests</li><li>Re-Engagement</li><li>Voice Receptionist</li><li>Customer Support</li><li>Client Onboarding</li></ol>
+  </section>
+
+  <section class="section">
+    <h2>How every system is built</h2>
+    <div class="principles">
+      <div><h3>Your tools, your data</h3><p>Built on your phone system, CRM and booking software. You own the accounts, numbers and records.</p></div>
+      <div><h3>AI only where it helps</h3><p>Timing, routing and reminders follow fixed rules. AI reads replies and answers from information you approved.</p></div>
+      <div><h3>People for judgment calls</h3><p>Emergencies, pricing, complaints and anything uncertain go straight to your team instead of being guessed.</p></div>
+      <div><h3>Compliant by design</h3><p>Consent, opt-outs and sender identification follow CASL and carrier rules. STOP always works.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Cedar Ridge Heating &amp; Air, Bayview Family Dental and Lakeshore Auto Service, their staff, customers and numbers are fictional. Report figures in the demos are illustrative, not results from real clients, and not a forecast.</p>
+  </footer>
+</div>
+</body>
+</html>

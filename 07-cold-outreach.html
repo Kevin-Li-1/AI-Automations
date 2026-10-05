@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Cold Outreach Automation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>/* Layout: a split "customer view | system view" walkthrough, then build spec, sample report and guardrails in one narrow column. */
+:root{
+  --bg:#eef2f4; --surface:#ffffff; --sunk:#e3e9ed; --ink:#13212b; --muted:#566874; --line:#d3dce2;
+  --cool:#0b6e86; --cool-soft:#d9eef3; --heat:#b8461b; --heat-soft:#fbe6dc;
+  --ai:#5145c9; --ai-soft:#e6e3fb; --stop:#7a5c63; --stop-soft:#efe5e7;
+  --bubble-in:#e3e9ed; --bubble-out:#0b6e86; --bubble-out-ink:#ffffff;
+  --f-display:"Archivo","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f171d; --surface:#16222a; --sunk:#1d2b34; --ink:#e4ecf0; --muted:#97a9b4; --line:#2a3a45;
+  --cool:#4fb8cf; --cool-soft:#123540; --heat:#f08a5d; --heat-soft:#3d2219;
+  --ai:#a49cf5; --ai-soft:#262250; --stop:#c9a3ac; --stop-soft:#33252a;
+  --bubble-in:#22323c; --bubble-out:#1f7f96; --bubble-out-ink:#ffffff; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f171d; --surface:#16222a; --sunk:#1d2b34; --ink:#e4ecf0; --muted:#97a9b4; --line:#2a3a45;
+  --cool:#4fb8cf; --cool-soft:#123540; --heat:#f08a5d; --heat-soft:#3d2219;
+  --ai:#a49cf5; --ai-soft:#262250; --stop:#c9a3ac; --stop-soft:#33252a;
+  --bubble-in:#22323c; --bubble-out:#1f7f96; --bubble-out-ink:#ffffff; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:20px 56px;display:flex;flex-direction:column;gap:36px}
+a{color:var(--cool)}
+:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,4.4vw,42px);font-weight:700;font-stretch:92%;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:700;font-stretch:95%}
+h3{font-size:15px;font-weight:600}
+p{margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+
+.topbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;font-size:13px}
+.topbar a{text-decoration:none;font-weight:600}
+.sample{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
+  background:var(--heat-soft);color:var(--heat);border:1px solid color-mix(in srgb,var(--heat) 35%,transparent);padding:4px 9px;border-radius:4px}
+
+.hero{display:flex;flex-direction:column;gap:12px;max-width:760px}
+.hero .pitch{font-size:18px;color:var(--ink)}
+.hero .problem{color:var(--muted);max-width:65ch}
+.client{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.client b{color:var(--ink);font-weight:600}
+
+/* Walkthrough */
+.stage{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:820px){.stage{grid-template-columns:minmax(0,1fr)}}
+.panehead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.phone{background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:10px;box-shadow:0 1px 0 var(--line),0 12px 30px -18px rgba(10,30,40,.35)}
+.phone-top{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px 10px;border-bottom:1px solid var(--line)}
+.phone-top .who{font-weight:600;font-size:14px}
+.phone-top .chan{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.convo{height:440px;overflow-y:auto;padding:14px 8px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+.msg{max-width:84%;padding:8px 12px;border-radius:16px;font-size:14px;line-height:1.45;white-space:pre-line;overflow-wrap:anywhere}
+.msg.in{align-self:flex-start;background:var(--bubble-in);border-bottom-left-radius:5px}
+.msg.out{align-self:flex-end;background:var(--bubble-out);color:var(--bubble-out-ink);border-bottom-right-radius:5px}
+.msg.staff{align-self:flex-end;background:var(--heat-soft);color:var(--ink);border:1px solid color-mix(in srgb,var(--heat) 40%,transparent);border-bottom-right-radius:5px}
+.msg .by{display:block;font-family:var(--f-mono);font-size:10.5px;opacity:.75;margin-bottom:2px;letter-spacing:.02em}
+.msg.email{max-width:96%;border-radius:10px;background:var(--surface);border:1px solid var(--line);align-self:stretch}
+.msg.email.out{background:var(--cool-soft);color:var(--ink);border-color:color-mix(in srgb,var(--cool) 30%,transparent)}
+.msg.email .subj{display:block;font-weight:600;margin-bottom:4px}
+.note{align-self:center;font-family:var(--f-mono);font-size:11px;color:var(--muted);text-align:center;padding:2px 8px}
+.fresh{animation:pop .35s ease-out}
+@keyframes pop{from{transform:translateY(6px);opacity:.2}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.fresh{animation:none}.convo{scroll-behavior:auto}}
+
+.system{background:var(--surface);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;min-width:0}
+.system .head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.steptitle{font-family:var(--f-display);font-size:19px;font-weight:700;font-stretch:95%}
+.log{list-style:none;margin:0;padding:8px 16px 12px;max-height:420px;overflow-y:auto;display:flex;flex-direction:column}
+.log li{display:grid;grid-template-columns:118px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px;opacity:.55}
+.log li.now{opacity:1}
+.log li:last-child{border-bottom:0}
+.log .t{overflow-wrap:anywhere}
+.log .t code{font-family:var(--f-mono);font-size:12.5px;background:var(--sunk);padding:1px 5px;border-radius:3px}
+.tag{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:4px;height:fit-content;width:fit-content;font-weight:600}
+.k-trigger{background:var(--sunk);color:var(--ink)}
+.k-rule{background:var(--cool-soft);color:var(--cool)}
+.k-data{background:var(--cool-soft);color:var(--cool)}
+.k-ai{background:var(--ai-soft);color:var(--ai)}
+.k-human,.k-alert{background:var(--heat-soft);color:var(--heat)}
+.k-stop{background:var(--stop-soft);color:var(--stop)}
+.k-log{background:var(--sunk);color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;border-top:1px solid var(--line)}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 16px;border-top:1px solid var(--line);background:var(--sunk);border-radius:0 0 10px 10px}
+.controls .ask{flex-basis:100%;font-size:13px;font-weight:600}
+button{font:inherit;font-size:14px;cursor:pointer;border-radius:6px;padding:8px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+button:hover{border-color:var(--cool)}
+button.primary{background:var(--cool);border-color:var(--cool);color:var(--surface);font-weight:600}
+button.choice{text-align:left;border-color:color-mix(in srgb,var(--cool) 45%,var(--line))}
+button[disabled]{opacity:.4;cursor:default}
+.spacer{flex:1}
+.counter{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.outcome{flex-basis:100%;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--cool);padding:10px 12px;border-radius:4px;font-size:14px}
+
+/* Spec */
+.section{display:flex;flex-direction:column;gap:14px}
+.section > p{max-width:70ch}
+.spec{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.spec div{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.spec .n{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.spec p{font-size:14px}
+
+/* Report */
+.report{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.report .rh{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar{display:grid;grid-template-columns:minmax(120px,210px) minmax(0,1fr) 48px;gap:12px;align-items:center;font-size:14px}
+.bar .track{height:14px;background:var(--sunk);border-radius:0 4px 4px 0;position:relative}
+.bar .fill{height:100%;background:var(--cool);border-radius:0 4px 4px 0;min-width:2px}
+.bar .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+@media (max-width:520px){.bar{grid-template-columns:minmax(0,1fr) 44px}.bar .track{grid-column:1 / -1;order:3}}
+.disclaim{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+
+.guard{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px 24px}
+.guard li{padding-left:20px;position:relative;font-size:14px;max-width:60ch}
+.guard li::before{content:"";position:absolute;left:0;top:.55em;width:9px;height:9px;border:2px solid var(--heat);border-radius:2px}
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:6px}
+</style>
+<div class="wrap">
+  <div class="topbar">
+    <a id="back" href="#">&larr; All demos</a>
+    <span class="sample">Demo · fictional business · sample data</span>
+  </div>
+
+  <header class="hero">
+    <span class="eyebrow" id="pos"></span>
+    <h1 id="name"></h1>
+    <p class="pitch" id="pitch"></p>
+    <p class="problem" id="problem"></p>
+    <div class="client" id="client"></div>
+  </header>
+
+  <section class="section" aria-label="Interactive walkthrough">
+    <div>
+      <h2>Walk through it</h2>
+      <p class="muted">Click <b>Next step</b> (or press &rarr;). Where the customer could do different things, pick one to see how the system handles it.</p>
+    </div>
+    <div class="stage">
+      <div>
+        <div class="panehead"><span class="eyebrow" id="viewlabel">What the customer sees</span></div>
+        <div class="phone">
+          <div class="phone-top"><span class="who" id="who"></span><span class="chan" id="chan"></span></div>
+          <div class="convo" id="convo" aria-live="polite"></div>
+        </div>
+      </div>
+      <div>
+        <div class="panehead"><span class="eyebrow">What the system does behind the scenes</span></div>
+        <div class="system">
+          <div class="head"><span class="eyebrow">Current step</span><span class="steptitle" id="steptitle"></span></div>
+          <ul class="log" id="log"></ul>
+          <div class="legend" id="legend"></div>
+          <div class="controls" id="controls"></div>
+        </div>
+      </div>
+    </div>
+    <span hidden id="counter"></span>
+  </section>
+
+  <section class="section">
+    <h2>How it is built</h2>
+    <p class="muted">Every automation we deliver is specified in the same twelve parts, so it behaves predictably, stops when it should and hands off to a person instead of guessing.</p>
+    <div class="spec" id="spec"></div>
+  </section>
+
+  <section class="section">
+    <h2>What the owner gets each week</h2>
+    <div class="report">
+      <div class="rh"><h3 id="rtitle"></h3><span class="eyebrow" id="rperiod"></span></div>
+      <div class="bars" id="bars"></div>
+      <p class="disclaim">Illustrative numbers made up for this demo. They are not results from a real client and are not a forecast. Real reports show the client's own measured numbers.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Guardrails</h2>
+    <ul class="guard" id="guard"></ul>
+  </section>
+
+  <footer>
+    <p id="tools"></p>
+    <p>Cedar Ridge Heating &amp; Air, Bayview Family Dental and Lakeshore Auto Service, their staff, customers and phone numbers are fictional. The same systems work for other local service businesses. Numbers in the 555-01xx range are reserved for fiction. Message wording is an example and is adjusted to each business's approved scripts.</p>
+  </footer>
+</div>
+<script>window.DEMO = {"slug":"07-cold-outreach","num":7,"tier":"Tier 2","title":"Cold Outreach Automation","name":"Cold Outreach Automation","pitch":"A small, careful outreach program that finds the right business customers and books meetings, without becoming a spam machine.","problem":"Business accounts smooth out a local company's slow seasons, but owners rarely have time to research prospects and follow up consistently. Example: an auto shop looking for local fleet accounts.","client":"Lakeshore Auto Service","industry":"Auto repair","where":"Oakville, ON","channel":"Email","email":true,"contact":"Jordan B., Operations Manager","contactSub":"Halton Floral Delivery (fictional) · email","start":"s1","nodes":{"s1":{"title":"Weekly prospect research","items":[{"c":"note","t":"Monday · weekly prospect run"}],"log":[["trigger","Weekly run builds a list of local businesses with small vehicle fleets in Oakville and Burlington."],["data","Sources: public business listings and the companies' own websites. Each fact is stored with its source link."],["rule","Keeps only contacts with a documented CASL basis, such as a business email published on the company's site for this role with no \"no solicitations\" notice. 38 of 120 excluded."],["rule","Removes existing customers and anyone who has ever unsubscribed."]],"next":"s2"},"s2":{"title":"Draft written from verified facts, then approved","items":[{"c":"note","t":"Draft waiting for Marco's approval"}],"log":[["ai","Drafts a short email using one verified fact: Halton Floral Delivery's website says it runs same-day delivery vans across Halton (source saved)."],["human","Marco reads and approves the batch before anything is sent. The email goes out from his real mailbox."]],"next":"s3"},"s3":{"title":"Email sent","items":[{"c":"out","subj":"Keeping your delivery vans on the road","t":"Hi Jordan,\n\nI'm Marco Russo, owner of Lakeshore Auto Service in Oakville. I saw on your website that you run same-day delivery vans across Halton. We look after a few local delivery fleets with scheduled maintenance and priority booking when a van goes down.\n\nWould a 15-minute call to compare notes on how you handle maintenance now be useful?\n\nMarco Russo\nLakeshore Auto Service · [mailing address]\nNot interested? Unsubscribe with one click."}],"log":[["rule","Sent within a daily cap of 20, spread across the day."],["log","Message, consent basis and fact sources stored with the prospect."]],"ask":"How does Jordan respond?","choices":[["Interested","i1"],["Not interested","x1"],["No reply","n1"],["Unsubscribes","u1"]]},"i1":{"title":"Interested reply goes to the owner","items":[{"c":"in","subj":"Re: Keeping your delivery vans on the road","t":"Timing's good, two of our vans are due for service and our current shop is slow. Call me Tuesday?"},{"c":"out","subj":"Re: Keeping your delivery vans on the road","by":"Marco (written by Marco)","t":"Great, Jordan. I'll call Tuesday at 10. Talk then."}],"log":[["ai","Intent: interested, wants a call Tuesday."],["alert","Marco notified with the thread and a suggested calendar slot."],["human","Marco replies himself. The system does not auto-reply to interested prospects."],["stop","Sequence stopped for this contact."]],"end":"A qualified business meeting landed on the owner's calendar."},"x1":{"title":"Polite no, permanently respected","items":[{"c":"in","subj":"Re: Keeping your delivery vans on the road","t":"We're happy with our current shop, thanks."}],"log":[["ai","Intent: not interested."],["stop","Sequence stopped. Contact suppressed from future campaigns unless they reach out."],["log","Reason saved for reporting."]],"end":"No follow-up after a no. Ever."},"n1":{"title":"One follow-up, then stop","items":[{"c":"note","t":"5 business days later"},{"c":"out","subj":"Re: Keeping your delivery vans on the road","t":"Hi Jordan, following up once in case this got buried. If your fleet maintenance is already covered, no need to reply. Marco"}],"log":[["rule","One follow-up only."],["stop","Sequence ends after this message."]],"end":"Two emails at most per prospect."},"u1":{"title":"Unsubscribe honoured at once","items":[{"c":"note","t":"Jordan clicks Unsubscribe"}],"log":[["rule","Suppressed immediately across all campaigns, well inside CASL's 10-business-day limit."],["stop","No further contact."]],"end":"Opt-outs are immediate and permanent."}},"spec":[["Trigger","Weekly prospect-research run."],["Data","Public business information with source links, contact role, consent basis, suppression list."],["Decision","Is there a valid consent basis? Is this a good-fit account? After a reply: interested, not now, no, unsubscribe."],["AI action","Summarizes public facts and drafts emails. Reads replies. It never invents personalization."],["Rule-based action","Suppression checks, daily send caps, one follow-up, unsubscribe handling."],["Customer action","Replies, ignores, or unsubscribes."],["Response handling","Interested replies go to the owner; noes and unsubscribes are suppressed."],["Stopping conditions","Any reply, unsubscribe, bounce, or one follow-up sent."],["Human handoff","Owner approves every batch and answers every interested reply."],["Logging","Consent basis, fact sources, messages and outcomes per prospect."],["Error handling","High bounce rate pauses the campaign. Missing consent basis means skip, never send."],["Reporting","Weekly: prospects found, excluded, sent, replies, meetings, unsubscribes."]],"report":{"title":"Business outreach","period":"Sample month","rows":[["Prospects reviewed",120],["Excluded (no consent basis)",38],["Emails sent",60],["Replies",9],["Interested",3],["Meetings booked",2],["Unsubscribed",2]]},"guard":["Every contact has a documented consent basis under CASL. No basis, no email.","Every email names the sender, includes a mailing address and a working unsubscribe.","Personalization uses only verified public facts, saved with their source.","The owner approves each batch, and emails go from their real mailbox in their name.","Low daily volume, honest subject lines, and no follow-up after a no.","No cold texting or robocalls."],"tools":"Built on existing tools: the business's phone system, a carrier-registered SMS provider, an automation platform such as n8n or Make, and the CRM, booking or shop software it already uses. No custom software, and the business owns its accounts and data.","indexUrl":"index.html"};</script>
+<script>(function () {
+  var D = window.DEMO;
+  var TAGS = { trigger: "Trigger", data: "Data", rule: "Rule-based", ai: "AI", human: "Human handoff", alert: "Staff alert", stop: "Stop", log: "Logged" };
+  var path = [D.start];
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function fmt(s) { return esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>"); }
+
+  function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+
+  function renderStatic() {
+    document.title = D.title;
+    $("back").href = D.indexUrl || "#";
+    $("back").hidden = !D.indexUrl;
+    $("pos").textContent = "Offer " + String(D.num).padStart(2, "0") + " of 10 · " + D.tier;
+    $("name").textContent = D.name;
+    $("pitch").textContent = D.pitch;
+    $("problem").textContent = D.problem;
+    $("client").innerHTML = "<span>Example business: <b>" + esc(D.client) + "</b> (fictional)</span><span>" + esc(D.industry) + " · " + esc(D.where) + "</span><span>Channel: <b>" + esc(D.channel) + "</b></span>";
+    $("who").textContent = D.contact;
+    $("chan").textContent = D.contactSub;
+    $("viewlabel").textContent = D.viewLabel || "What the customer sees";
+
+    var spec = $("spec");
+    D.spec.forEach(function (s, i) {
+      var d = el("div");
+      d.appendChild(el("span", "n", String(i + 1).padStart(2, "0") + " · " + esc(s[0])));
+      d.appendChild(el("p", null, fmt(s[1])));
+      spec.appendChild(d);
+    });
+
+    var r = D.report;
+    $("rtitle").textContent = r.title;
+    $("rperiod").textContent = r.period;
+    var max = Math.max.apply(null, r.rows.map(function (x) { return x[1]; }));
+    r.rows.forEach(function (row) {
+      var b = el("div", "bar");
+      b.title = row[0] + ": " + row[1];
+      b.appendChild(el("span", null, esc(row[0])));
+      var t = el("div", "track"); var f = el("div", "fill"); f.style.width = (row[1] / max * 100) + "%"; t.appendChild(f);
+      b.appendChild(t);
+      b.appendChild(el("span", "v", String(row[1])));
+      $("bars").appendChild(b);
+    });
+
+    D.guard.forEach(function (g) { $("guard").appendChild(el("li", null, fmt(g))); });
+    $("tools").textContent = D.tools;
+
+    var lg = $("legend");
+    ["trigger", "rule", "ai", "human", "stop", "log"].forEach(function (k) { lg.appendChild(el("span", "tag k-" + k, TAGS[k])); });
+  }
+
+  function render(fresh) {
+    var convo = $("convo"), log = $("log");
+    convo.innerHTML = ""; log.innerHTML = "";
+    path.forEach(function (id, idx) {
+      var n = D.nodes[id], last = idx === path.length - 1;
+      (n.items || []).forEach(function (m) {
+        var e;
+        if (m.c === "note") e = el("div", "note", esc(m.t));
+        else {
+          var cls = "msg " + m.c + (D.email ? " email" : "");
+          var inner = (m.by ? '<span class="by">' + esc(m.by) + "</span>" : "") + (m.subj ? '<span class="subj">' + esc(m.subj) + "</span>" : "") + esc(m.t);
+          e = el("div", cls, inner);
+        }
+        if (last && fresh) e.classList.add("fresh");
+        convo.appendChild(e);
+      });
+      (n.log || []).forEach(function (l) {
+        var li = el("li", last ? "now" : "");
+        li.appendChild(el("span", "tag k-" + l[0], TAGS[l[0]]));
+        li.appendChild(el("span", "t", fmt(l[1])));
+        log.appendChild(li);
+      });
+    });
+    convo.scrollTop = convo.scrollHeight;
+    var nowItem = log.querySelector("li.now"); log.scrollTop = nowItem ? nowItem.offsetTop - 8 : log.scrollHeight;
+
+    var cur = D.nodes[path[path.length - 1]];
+    $("steptitle").textContent = cur.title;
+    $("counter").textContent = "Step " + path.length;
+    var c = $("controls"); c.innerHTML = "";
+    var back = el("button", null, "Back"); back.disabled = path.length < 2; back.onclick = function () { path.pop(); render(false); };
+    if (cur.choices) {
+      c.appendChild(el("div", "ask", esc(cur.ask || "What happens next?")));
+      cur.choices.forEach(function (ch) {
+        var b = el("button", "choice", esc(ch[0])); b.onclick = function () { path.push(ch[1]); render(true); }; c.appendChild(b);
+      });
+      c.appendChild(el("span", "spacer")); c.appendChild(back);
+    } else if (cur.next) {
+      c.appendChild(back); c.appendChild(el("span", "spacer")); c.appendChild(el("span", "counter", "Step " + path.length));
+      var nx = el("button", "primary", "Next step"); nx.onclick = function () { path.push(cur.next); render(true); }; c.appendChild(nx);
+    } else {
+      c.appendChild(el("div", "outcome", "<b>Outcome:</b> " + fmt(cur.end)));
+      var lastChoice = -1; for (var i = path.length - 2; i >= 0; i--) if (D.nodes[path[i]].choices) { lastChoice = i; break; }
+      if (lastChoice >= 0) { var tr = el("button", "primary", "Try another path"); tr.onclick = function () { path = path.slice(0, lastChoice + 1); render(false); }; c.appendChild(tr); }
+      var rs = el("button", null, "Start over"); rs.onclick = function () { path = [D.start]; render(false); }; c.appendChild(rs);
+      c.appendChild(back);
+    }
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "ArrowRight" || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    var cur = D.nodes[path[path.length - 1]]; if (cur.next) { path.push(cur.next); render(true); }
+  });
+  renderStatic(); render(false);
+})();
+</script>
+
+</body>
+</html>
